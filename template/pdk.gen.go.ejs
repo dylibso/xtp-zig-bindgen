@@ -173,11 +173,14 @@ func _<%= ex.name %>() int32 {
 			}
 			return &output, nil
 		<% } else if (imp.output.contentType === 'text/plain; charset=UTF-8') { -%>
-			return pdk.FindMemory(offs).ReadString(), nil
+			outputMem := pdk.FindMemory(offs)
+			return outputMem.ReadString(), nil
 		<% } else if (imp.output.type === 'string') { -%>
-			return pdk.FindMemory(offs).ReadString(), nil
+			outputMem := pdk.FindMemory(offs)
+			return outputMem.ReadString(), nil
 		<% } else { -%>
-			return pdk.FindMemory(offs).ReadBytes(), nil
+			outputMem := pdk.FindMemory(offs)
+			return outputMem.ReadBytes(), nil
 		<% } -%>
 	<% } else { %>
 		return nil

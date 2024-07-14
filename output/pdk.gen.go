@@ -227,7 +227,8 @@ func Kv_read(input string) ([]byte, error) {
 
 	offs := _kv_read(mem.Offset())
 
-	return pdk.FindMemory(offs).ReadBytes(), nil
+	outputMem := pdk.FindMemory(offs)
+	return outputMem.ReadBytes(), nil
 
 }
 

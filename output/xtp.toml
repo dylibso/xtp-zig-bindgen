@@ -8,10 +8,10 @@ name = "hello"
 
 [scripts]
 # xtp plugin build runs this script to generate the wasm file
-build = "npm run build"
+build = "tinygo build -target wasi -o dist/plugin.wasm ."
 
 # xtp plugin init runs this script to format the code
-format = "npm run format"
+format = "go fmt"
 
 # xtp plugin init runs this script before running the format script
-prepare = "npm install"
+prepare = "go get ./..."
