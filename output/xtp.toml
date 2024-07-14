@@ -3,15 +3,15 @@ app_id = "app_1234"
 # This is where 'xtp plugin push' expects to find the wasm file after the build script has run.
 bin = "dist/plugin.wasm"
 extension_point_id = "ext_1234"
+# This is the 'binding' name used for the plugin.
 name = "hello"
 
 [scripts]
+# xtp plugin build runs this script to generate the wasm file
+build = "npm run build"
 
-  # xtp plugin build runs this script to generate the wasm file
-  build = "npm run build"
+# xtp plugin init runs this script to format the code
+format = "npm run format"
 
-  # xtp plugin init runs this script to format the code
-  format = "npm run format"
-
-  # xtp plugin init runs this script before running the format script
-  prepare = "npm install"
+# xtp plugin init runs this script before running the format script
+prepare = "npm install"

@@ -1,5 +1,5 @@
 {
-  "name": "xtp-typescript-bindgen",
+  "name": "xtp-go-bindgen",
   "version": "0.0.6",
   "description": "",
   "main": "dist/index.js",

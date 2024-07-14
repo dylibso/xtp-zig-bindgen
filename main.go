@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"go/format"
 	"io"
 	"log"
 	"os"
@@ -277,6 +278,7 @@ func main() {
 					return fmt.Errorf("could not open source file: %v", err)
 				}
 				defer sourceFile.Close()
+				// fmt.Println("working on template:", name)
 
 				data, err := io.ReadAll(sourceFile)
 				if err != nil {
@@ -291,6 +293,15 @@ func main() {
 
 				// TODO this won't work with casing and could replace the wrong thing first
 				mirrorPath = strings.Replace(mirrorPath, ".ejs", "", 1)
+
+				// TODO: pass `result` through Go's `Source` func: https://pkg.go.dev/go/format#Source
+				if strings.HasSuffix(mirrorPath, ".go") {
+					fmtd, err := format.Source(result)
+					if err != nil {
+						panic(err)
+					}
+					result = fmtd
+				}
 
 				err = os.WriteFile(mirrorPath, result, os.ModePerm)
 				if err != nil {
