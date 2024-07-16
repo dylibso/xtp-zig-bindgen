@@ -4,10 +4,9 @@
 > be made without warning. Please wait before you start writing new bindgens.
 
 This repository houses the prototype for bingden for Go plug-ins in XTP. It's
-based on the
-[XTP Schema](https://docs.xtp.dylibso.com/docs/host-usage/xtp-schema) as the
-driving document. This document will be used to generate code and documentation
-for plug-in systems and is specifically tailored to
+based on the [XTP Schema](https://docs.xtp.dylibso.com/docs/concepts/xtp-schema)
+as the driving document. This document will be used to generate code and
+documentation for plug-in systems and is specifically tailored to
 [Extism](https://extism.org/) at the moment.
 
 ## Building
@@ -21,7 +20,7 @@ An XTP gen template is distributed as a zip file with a `plugin.wasm`,
 ```
 
 To test you can use the XTP CLI and `plugin init`. You just need to point it at
-a valid [XTP Schema](https://docs.xtp.dylibso.com/docs/host-usage/xtp-schema)
+a valid [XTP Schema](https://docs.xtp.dylibso.com/docs/concepts/xtp-schema)
 file:
 
 ```
