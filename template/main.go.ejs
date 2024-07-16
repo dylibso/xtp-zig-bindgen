@@ -5,18 +5,22 @@ package main
 <% if (Object.values(schema.schemas).length > 0) { %>
 	
 	<% schema.exports.forEach(ex => { %>
-	<% if (exportHasComment(ex)) -%>	
-	// <%= formatBlockComment(ex.description) %>
-	<% if (propertyHasComment(ex.input)) { -%>
-	// It takes <%= toGolangType(ex.input) %> as input (<%= formatComment(ex.input.description) %>)
+	<% if (hasComment(ex)) -%>	
+	// <%= formatGoBlockComment(ex.description) %>
+	<% if (hasComment(ex.input)) { -%>
+	// It takes <%= toGolangType(ex.input) %> as input (<%= formatGoComment(ex.input.description) %>)
 	<% } -%>
-	<% if (propertyHasComment(ex.output)) { -%>
-	// And returns <%= toGolangType(ex.output) %> (<%= formatComment(ex.output.description) %>)
+	<% if (hasComment(ex.output)) { -%>
+	// And returns <%= toGolangType(ex.output) %> (<%= formatGoComment(ex.output.description) %>)
 	<% } -%>
 	<% -%>
 	func <%= ex.name %>(<%- ex.input ? `input ${toGolangType(ex.input)}` : null %>) <%- ex.output ? `(${toGolangType(ex.output)}, error)` : "error" %> {
-		// TODO: fill out your implementation here
-		panic("Function not implemented.");
+		<% if (featureFlags['stub-with-code-samples'] && codeSamples(ex, 'go')[0]) { -%>
+			<%- codeSamples(ex, 'go')[0].source %>
+		<% } else { -%>
+			// TODO: fill out your implementation here
+			panic("Function not implemented.")
+		<% } -%>
 	}
 	<% }) %>
 

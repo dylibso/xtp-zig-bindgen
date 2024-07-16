@@ -8,7 +8,7 @@ name = "<%= project.name %>"
 
 [scripts]
 # xtp plugin build runs this script to generate the wasm file
-build = "tinygo build -target wasi -o dist/plugin.wasm ."
+build = "mkdir -p dist && tinygo build -target wasi -o dist/plugin.wasm ."
 
 # xtp plugin init runs this script to format the code
 format = "go fmt"

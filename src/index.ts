@@ -1,11 +1,5 @@
 import ejs from "ejs";
-import { Export, parse, Property } from "@dylibso/xtp-bindgen";
-
-function getContext() {
-  const ctx = JSON.parse(Config.get("ctx") || "{}");
-  ctx.schema = parse(JSON.stringify(ctx.schema));
-  return ctx;
-}
+import { getContext, helpers, Property } from "@dylibso/xtp-bindgen";
 
 function toGolangType(property: Property): string {
   if (property.$ref) return property.$ref.name;
@@ -42,24 +36,14 @@ function pointerToGolangType(property: Property) {
   return `*${typ}`;
 }
 
-function propertyHasComment(p: Property | null) {
-  if (!p) return false;
-  return p.description || p.$ref;
-}
-
-function exportHasComment(ex: Export) {
-  return ex.description || propertyHasComment(ex.input || null) ||
-    propertyHasComment(ex.output || null);
-}
-
 // formats multi line comments to fit in block format
-function formatComment(s: string | null) {
+function formatGoComment(s: string | null) {
   if (!s) return "";
   return s.trimEnd().replace(/\n/g, " ");
 }
 
 // trims comment to fit on one line
-function formatBlockComment(s: string | null) {
+function formatGoBlockComment(s: string | null) {
   if (!s) return "";
   return s.trimEnd().replace(/\n/g, "\n// ");
 }
@@ -77,13 +61,12 @@ function makePublic(s: string) {
 export function render() {
   const tmpl = Host.inputString();
   const ctx = {
+    ...helpers,
     ...getContext(),
     toGolangType: toGolangType,
     pointerToGolangType,
-    propertyHasComment,
-    exportHasComment,
-    formatBlockComment,
-    formatComment,
+    formatGoBlockComment,
+    formatGoComment,
     makePublic,
   };
 
