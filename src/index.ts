@@ -14,7 +14,7 @@ function toGolangType(property: Property): string {
     case "boolean":
       return "bool";
     case "object":
-      return "any";
+      return "map[string]interface{}";
     case "array":
       if (!property.items) return "[]any";
       // TODO this is not quite right to force cast
@@ -29,7 +29,7 @@ function toGolangType(property: Property): string {
 function pointerToGolangType(property: Property) {
   const typ = toGolangType(property);
 
-  if (typ.startsWith("[]")) {
+  if (typ.startsWith("[]") || typ.startsWith("map[")) {
     return typ;
   }
 
