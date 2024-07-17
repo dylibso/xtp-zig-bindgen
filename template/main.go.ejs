@@ -6,16 +6,16 @@ package main
 	
 	<% schema.exports.forEach(ex => { %>
 	<% if (hasComment(ex)) -%>	
-	// <%= formatGoBlockComment(ex.description) %>
+	// <%= formatCommentBlock(ex.description, "// ") %>
 	<% if (hasComment(ex.input)) { -%>
-	// It takes <%= toGolangType(ex.input) %> as input (<%= formatGoComment(ex.input.description) %>)
+	// It takes <%= toGolangType(ex.input) %> as input (<%= formatCommentLine(ex.input.description) %>)
 	<% } -%>
 	<% if (hasComment(ex.output)) { -%>
-	// And returns <%= toGolangType(ex.output) %> (<%= formatGoComment(ex.output.description) %>)
+	// And returns <%= toGolangType(ex.output) %> (<%= formatCommentLine(ex.output.description) %>)
 	<% } -%>
 	<% -%>
 	func <%= ex.name %>(<%- ex.input ? `input ${toGolangType(ex.input)}` : null %>) <%- ex.output ? `(${toGolangType(ex.output)}, error)` : "error" %> {
-		<% if (featureFlags['stub-with-code-samples'] && codeSamples(ex, 'go')[0]) { -%>
+		<% if (featureFlags['stub-with-code-samples'] && codeSamples(ex, 'go').length > 0) { -%>
 			<%- codeSamples(ex, 'go')[0].source %>
 		<% } else { -%>
 			// TODO: fill out your implementation here

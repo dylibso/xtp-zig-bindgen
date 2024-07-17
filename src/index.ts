@@ -36,18 +36,6 @@ function pointerToGolangType(property: Property) {
   return `*${typ}`;
 }
 
-// formats multi line comments to fit in block format
-function formatGoComment(s: string | null) {
-  if (!s) return "";
-  return s.trimEnd().replace(/\n/g, " ");
-}
-
-// trims comment to fit on one line
-function formatGoBlockComment(s: string | null) {
-  if (!s) return "";
-  return s.trimEnd().replace(/\n/g, "\n// ");
-}
-
 function makePublic(s: string) {
   const cap = s.charAt(0).toUpperCase();
   if (s.charAt(0) === cap) {
@@ -65,8 +53,6 @@ export function render() {
     ...getContext(),
     toGolangType: toGolangType,
     pointerToGolangType,
-    formatGoBlockComment,
-    formatGoComment,
     makePublic,
   };
 
