@@ -87,18 +87,18 @@ func _<%= ex.name %>() int32 {
 	<% Object.values(schema.schemas).forEach(schema => { %>
 		<% if (schema.properties) { %>
 	
-	// <%= formatGoBlockComment(schema.description) %>
+	// <%= formatCommentBlock(schema.description, "// ") %>
 	type <%= schema.name %> struct {
 		<% schema.properties.forEach(p => { -%>
 		<% if (p.description) { -%>
-		// <%= formatGoBlockComment(p.description) %>
+		// <%= formatCommentBlock(p.description, "// ") %>
 		<% } -%>
 		<%= makePublic(p.name) %> <%= p.nullable ? pointerToGolangType(p) : toGolangType(p) %> <% if (schema.contentType === "application/json") { %> `json:"<%= p.name %>"` <% } %>
 		<% }) %>
 	}
 		<% } else if (schema.enum) { %>
 	
-	// <%= formatGoComment(schema.description) %>
+	// <%= formatCommentLine(schema.description) %>
 	type <%= makePublic(schema.name) %> int
 	const (
 		<% schema.enum.forEach((variant, i) => { -%>
@@ -135,12 +135,12 @@ func _<%= ex.name %>() int32 {
 
 <% schema.imports.forEach(imp => { %>
 	<% if (hasComment(imp)) -%>
-	// <%= makePublic(imp.name) %> <%= formatGoBlockComment(imp.description) %>
+	// <%= makePublic(imp.name) %> <%= formatCommentBlock(imp.description, "// ") %>
 	<% if (hasComment(imp.input)) { -%>
-	// It takes input of <%= toGolangType(imp.input) %> (<%= formatGoComment(imp.input.description) %>)
+	// It takes input of <%= toGolangType(imp.input) %> (<%= formatCommentLine(imp.input.description) %>)
 	<% } -%>
 	<% if (hasComment(imp.output)) { -%>
-	// And it returns <%= toGolangType(imp.output) %> (<%= formatGoComment(imp.output.description) %>)
+	// And it returns an output <%= toGolangType(imp.output) %> (<%= formatCommentLine(imp.output.description) %>)
 	<% } -%>
 	func <%= makePublic(imp.name) %>(<%- imp.input ? `input ${toGolangType(imp.input)}` : null %>) <%- imp.output ? `(${pointerToGolangType(imp.output)}, error)` : "error" %> {
 	<% if (imp.input) { -%>
