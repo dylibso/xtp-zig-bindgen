@@ -31,6 +31,13 @@ jobs:
         run: |
           npm run build
 
+      - name: Install TinyGo
+        uses: acifani/setup-tinygo@v1.1.0
+        with:
+          tinygo-version: 0.31.2
+          binaryen-version: "116"
+          
+
       - name: Run test script
         run: |
           cd tests && ./test.sh
