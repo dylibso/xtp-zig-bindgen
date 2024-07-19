@@ -8,6 +8,12 @@ function toGolangType(property: Property): string {
     case "string":
       return "string";
     case "number":
+      if (property.format === "float") {
+        return "float32";
+      }
+      if (property.format === "double") {
+        return "float64";
+      }
       return "int64";
     case "integer":
       return "int32";
