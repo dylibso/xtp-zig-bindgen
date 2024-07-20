@@ -2,8 +2,6 @@
 package main
 
 import (
-	"fmt"
-	<% if (JSON.stringify(schema).includes("enum")) { %>"errors"<% } %>
 	pdk "github.com/extism/go-pdk"
 )
 
@@ -24,11 +22,11 @@ func _<%= ex.name %>() int32 {
     <% } else if (ex.input.type === 'string') { -%>
       <% if (ex.input.$ref && ex.input.$ref.enum) { -%>
 			pdk.Log(pdk.LogDebug, "<%= ex.name %>: getting enum string input")
-			input, err := stringTo<%= ex.input.$ref.name %>(pdk.InputString())
-			if err != nil {
-				pdk.SetError(err)
-				return -1
-			}
+      input, err := stringTo<%= ex.input.$ref.name %>(pdk.InputString())
+      if err != nil {
+        pdk.SetError(err)
+        return -1
+      }
 			<% } else { -%>
 			pdk.Log(pdk.LogDebug, "<%= ex.name %>: getting string input")
 			input := pdk.InputString()
@@ -110,10 +108,10 @@ func _<%= ex.name %>() int32 {
 		<% } else if (schema.enum) { %>
 	
 	// <%= formatCommentLine(schema.description) %>
-	type <%= makePublic(schema.name) %> int
+	type <%= makePublic(schema.name) %> string
 	const (
 		<% schema.enum.forEach((variant, i) => { -%>
-			<%= i === 0 ? `${makePublic(variant)} ${makePublic(schema.name)} = iota` : `${makePublic(variant)}` %>
+			<%- `${makePublic(schema.name)}${makePublic(variant)} = "${variant}"` %>
 		<% }) -%>
 	)
 
@@ -127,37 +125,6 @@ func _<%= ex.name %>() int32 {
 			return ""
 		}
 	}
-
-	func (v <%= makePublic(schema.name) %>) MarshalJSON() ([]byte, error) {
-		s := fmt.Sprintf(`"%s"`, v.String())
-		return []byte(s), nil
-	}
-
-	func (v *<%= makePublic(schema.name) %>) UnmarshalJSON(b []byte) error {
-		var err error
-		_ = err
-		enum, err := stringTo<%= makePublic(schema.name) %>(string(b))
-		if err != nil {
-			return err
-		}
-
-		*v = enum
-		return nil
-	}
-
-	func stringTo<%= makePublic(schema.name) %>(s string) (<%= makePublic(schema.name) %>, error) {
-		switch (s) {
-		<% schema.enum.forEach((variant) => { -%>
-		case `<%= variant %>`:
-			return <%= makePublic(variant) %>, nil
-		<% }) -%>
-		default:
-			return <%= makePublic(schema.name) %>(-1), errors.New("unable to convert string to <%= `${makePublic(schema.name)}` %>")
-		}
-	}
-	
-		<% } %>
-	
 	<% }) %>
 
 
