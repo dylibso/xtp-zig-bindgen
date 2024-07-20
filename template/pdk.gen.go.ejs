@@ -111,7 +111,7 @@ func _<%= ex.name %>() int32 {
 	type <%= makePublic(schema.name) %> string
 	const (
 		<% schema.enum.forEach((variant, i) => { -%>
-			<%- `${makePublic(schema.name)}${makePublic(variant)} = "${variant}"` %>
+			<%- `${makePublic(schema.name)}${makePublic(variant)} ${makePublic(schema.name)} = "${variant}"` %>
 		<% }) -%>
 	)
 
