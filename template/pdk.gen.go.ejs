@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	<% if (JSON.stringify(schema).includes("enum")) { %>"errors"<% } %>
 	pdk "github.com/extism/go-pdk"
 )
@@ -120,7 +121,7 @@ func _<%= ex.name %>() int32 {
 		switch (v) {
 		<% schema.enum.forEach((variant) => { -%>
 		case <%= makePublic(variant) %>:
-			return `"<%= variant %>"`
+			return `<%= variant %>`
 		<% }) -%>
 		default: 
 			return ""
@@ -128,7 +129,7 @@ func _<%= ex.name %>() int32 {
 	}
 
 	func (v <%= makePublic(schema.name) %>) MarshalJSON() ([]byte, error) {
-		s := v.String()
+		s := fmt.Sprintf(`"%s"`, v.String())
 		return []byte(s), nil
 	}
 
@@ -147,7 +148,7 @@ func _<%= ex.name %>() int32 {
 	func stringTo<%= makePublic(schema.name) %>(s string) (<%= makePublic(schema.name) %>, error) {
 		switch (s) {
 		<% schema.enum.forEach((variant) => { -%>
-		case `"<%= variant %>"`:
+		case `<%= variant %>`:
 			return <%= makePublic(variant) %>, nil
 		<% }) -%>
 		default:
