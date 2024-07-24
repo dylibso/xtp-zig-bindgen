@@ -2,6 +2,7 @@
 package main
 
 import (
+	<% if (JSON.stringify(schema).includes("enum")) { %>"errors"<% } %>
 	pdk "github.com/extism/go-pdk"
 )
 
@@ -118,11 +119,22 @@ func _<%= ex.name %>() int32 {
 	func (v <%= makePublic(schema.name) %>) String() string {
 		switch (v) {
 		<% schema.enum.forEach((variant) => { -%>
-		case <%= makePublic(variant) %>:
+		case <%= `${makePublic(schema.name)}${makePublic(variant)}` %>:
 			return `<%= variant %>`
 		<% }) -%>
 		default: 
 			return ""
+		}
+	}
+
+	func stringTo<%= makePublic(schema.name) %>(s string) (<%= makePublic(schema.name) %>, error) {
+		switch (s) {
+		<% schema.enum.forEach((variant) => { -%>
+		case `<%= variant %>`:
+			return <%= `${makePublic(schema.name)}${makePublic(variant)}` %>, nil
+		<% }) -%>
+		default:
+			return <%= makePublic(schema.name) %>(""), errors.New("unable to convert string to <%= `${makePublic(schema.name)}` %>")
 		}
 	}
 
