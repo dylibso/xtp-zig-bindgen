@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	<% if (JSON.stringify(schema).includes("enum")) { %>"errors"<% } %>
 	pdk "github.com/extism/go-pdk"
 )
@@ -10,8 +11,10 @@ import (
 //export <%= ex.name %>
 func _<%= ex.name %>() int32 {
 	var err error
+	_ = err
   <% if (ex.input) { -%>
     <% if (ex.input.contentType === 'application/json') { -%>
+			pdk.Log(pdk.LogDebug, "<%= ex.name %>: getting JSON input")
 			var input <%- toGolangType(ex.input) %>
 			err = pdk.InputJSON(&input)
 			if err != nil {
@@ -20,18 +23,22 @@ func _<%= ex.name %>() int32 {
 			}
     <% } else if (ex.input.type === 'string') { -%>
       <% if (ex.input.$ref && ex.input.$ref.enum) { -%>
+			pdk.Log(pdk.LogDebug, "<%= ex.name %>: getting enum string input")
 			input, err := stringTo<%= ex.input.$ref.name %>(pdk.InputString())
 			if err != nil {
 				pdk.SetError(err)
 				return -1
 			}
 			<% } else { -%>
+			pdk.Log(pdk.LogDebug, "<%= ex.name %>: getting string input")
 			input := pdk.InputString()
 			<% } %>
     <% } else { -%>
+			pdk.Log(pdk.LogDebug, "<%= ex.name %>: getting bytes input")
       input := pdk.Input()
     <% } -%>
 
+		pdk.Log(pdk.LogDebug, "<%= ex.name %>: calling implementation function")
     <% if (ex.output) { -%>
       output, err := <%= ex.name %>(input)
 			if err != nil {
@@ -59,18 +66,22 @@ func _<%= ex.name %>() int32 {
 
   <% if (ex.output) { -%>
     <% if (ex.output.contentType === 'application/json') { -%>
+			pdk.Log(pdk.LogDebug, "<%= ex.name %>: setting JSON output")
 			err = pdk.OutputJSON(output)
 			if err != nil {
 				pdk.SetError(err)
 				return -1
 			}
     <% } else if (ex.output.type === 'string') { -%>
+			pdk.Log(pdk.LogDebug, "<%= ex.name %>: setting string output")
       pdk.OutputString(output)
     <% } else { -%>
+			pdk.Log(pdk.LogDebug, "<%= ex.name %>: setting bytes output")
       pdk.Output(output)
     <% } -%>
   <% } -%>
 
+	pdk.Log(pdk.LogDebug, "<%= ex.name %>: returning")
   return 0
 }
 
@@ -110,17 +121,34 @@ func _<%= ex.name %>() int32 {
 		switch (v) {
 		<% schema.enum.forEach((variant) => { -%>
 		case <%= makePublic(variant) %>:
-			return "<%= variant %>"
+			return `<%= variant %>`
 		<% }) -%>
 		default: 
 			return ""
 		}
 	}
 
+	func (v <%= makePublic(schema.name) %>) MarshalJSON() ([]byte, error) {
+		s := fmt.Sprintf(`"%s"`, v.String())
+		return []byte(s), nil
+	}
+
+	func (v *<%= makePublic(schema.name) %>) UnmarshalJSON(b []byte) error {
+		var err error
+		_ = err
+		enum, err := stringTo<%= makePublic(schema.name) %>(string(b))
+		if err != nil {
+			return err
+		}
+
+		*v = enum
+		return nil
+	}
+
 	func stringTo<%= makePublic(schema.name) %>(s string) (<%= makePublic(schema.name) %>, error) {
 		switch (s) {
 		<% schema.enum.forEach((variant) => { -%>
-		case "<%= variant %>":
+		case `<%= variant %>`:
 			return <%= makePublic(variant) %>, nil
 		<% }) -%>
 		default:
@@ -143,6 +171,8 @@ func _<%= ex.name %>() int32 {
 	// And it returns an output <%= toGolangType(imp.output) %> (<%= formatCommentLine(imp.output.description) %>)
 	<% } -%>
 	func <%= makePublic(imp.name) %>(<%- imp.input ? `input ${toGolangType(imp.input)}` : null %>) <%- imp.output ? `(${pointerToGolangType(imp.output)}, error)` : "error" %> {
+		var err error
+		_ = err
 	<% if (imp.input) { -%>
 		<% if (imp.input.contentType === 'application/json') { -%>
 		mem, err := pdk.AllocateJSON(&input)
@@ -167,17 +197,18 @@ func _<%= ex.name %>() int32 {
 	<% if (imp.output) { -%>
 		<% if (imp.output.contentType === 'application/json') { -%>
 			var output <%= toGolangType(imp.output) %>
-			err := pdk.JSONFrom(offs, &output)
+			err = pdk.JSONFrom(offs, &output)
 			if err != nil {
 				return nil, err
 			}
 			return &output, nil
 		<% } else if (imp.output.contentType === 'text/plain; charset=UTF-8') { -%>
 			outputMem := pdk.FindMemory(offs)
-			return outputMem.ReadString(), nil
+			return string(outputMem.ReadBytes()), nil
 		<% } else if (imp.output.type === 'string') { -%>
 			outputMem := pdk.FindMemory(offs)
-			return outputMem.ReadString(), nil
+			out := string(outputMem.ReadBytes())
+			return &out, err
 		<% } else { -%>
 			outputMem := pdk.FindMemory(offs)
 			return outputMem.ReadBytes(), nil
