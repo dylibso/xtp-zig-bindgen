@@ -5,6 +5,6 @@ dependencies:
 available-feature-flags:
   - name: stub-with-code-samples
     description: |
-      Stub the `main.ts` implementations with code from the codeSamples property.
+      Stub the `main.go` implementations with code from the codeSamples property.
       By default the implementations will throw a not-implemented error. This will error out
-      if every export doesn't have at least one typescript codeSample.
+      if every export doesn't have at least one Go codeSample.
