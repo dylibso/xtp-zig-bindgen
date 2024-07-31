@@ -42,3 +42,28 @@ jobs:
         run: |
           cd tests && ./test.sh
 
+      - name: Run Bindgen Test
+        run: |
+          # we already have a folder named bundle
+          # move it before we get the simulation bundle
+          # TODO change the name
+          mv bundle template-bundle
+
+          # get the latest release
+          RELEASE_INFO=$(curl -s "https://api.github.com/repos/dylibso/xtp-bindgen-test/releases/latest")
+          ASSET_URL=$(echo $RELEASE_INFO | grep -oP '"browser_download_url": "\K(.*bundle.zip)(?=")')
+          if [ -z "$ASSET_URL" ]; then
+            echo "Asset URL not found. Please check the asset name or the repository."
+            exit 1
+          fi
+
+          # download and unzip the bundle
+          curl -L -o bundle.zip "$ASSET_URL"
+          unzip bundle.zip
+          cd bundle/
+
+          # Using ../template-bundle so we test the head template
+          xtp plugin init --schema-file schema.yaml --template ../template-bundle --path exampleplugin --name exampleplugin --feature stub-with-code-samples
+          xtp plugin build --path exampleplugin
+          xtp plugin test exampleplugin/dist/plugin.wasm --with test.wasm --mock-host mock.wasm
+

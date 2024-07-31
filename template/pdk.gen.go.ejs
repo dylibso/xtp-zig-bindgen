@@ -3,6 +3,8 @@ package main
 
 import (
 	<% if (JSON.stringify(schema).includes("enum")) { %>"errors"<% } %>
+	<% if (JSON.stringify(schema).includes("date-time")) { %>"time"<% } %>
+
 	pdk "github.com/extism/go-pdk"
 )
 
