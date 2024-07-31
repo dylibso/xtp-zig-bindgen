@@ -7,10 +7,6 @@ exports:
       - lang: typescript
         source: |
           console.log('Hello World!')
-      - lang: go
-        source: |- 
-          println("Hello World!")
-          return nil
   - name: topLevelPrimitives
     description: |
       This demonstrates how you can accept or return primtive types.
@@ -119,6 +115,8 @@ schemas:
         description: |
           A datetime object, we will automatically serialize and deserialize
           this for you.
+      - name: writeParams
+        $ref: "#/schemas/WriteParams"
     contentType: application/json
     description: A complex json object
 version: v1-draft
