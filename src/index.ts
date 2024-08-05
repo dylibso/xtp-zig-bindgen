@@ -59,7 +59,7 @@ export function render() {
   const ctx = {
     ...helpers,
     ...getContext(),
-    toGolangType: toGolangType,
+    toGolangType,
     pointerToGolangType,
     makePublic,
   };

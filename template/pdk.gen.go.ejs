@@ -97,7 +97,7 @@ func _<%= ex.name %>() int32 {
 	<% } %>
 	
 	<% Object.values(schema.schemas).forEach(schema => { %>
-		<% if (schema.properties) { %>
+		<% if (schema.properties.length > 0) { %>
 	
 	// <%= formatCommentBlock(schema.description, "// ") %>
 	type <%= schema.name %> struct {
