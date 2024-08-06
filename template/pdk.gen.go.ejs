@@ -105,7 +105,7 @@ func _<%= ex.name %>() int32 {
 		<% if (p.description) { -%>
 		// <%= formatCommentBlock(p.description, "// ") %>
 		<% } -%>
-		<%= makePublic(p.name) %> <%= p.nullable ? pointerToGolangType(p) : toGolangType(p) %> <% if (schema.contentType === "application/json") { %> `json:"<%= p.name %>"` <% } %>
+		<%= makePublic(p.name) %> <%= p.nullable ? pointerToGolangType(p) : toGolangType(p) %> `json:"<%= p.name %>"`
 		<% }) %>
 	}
 		<% } else if (schema.enum) { %>
