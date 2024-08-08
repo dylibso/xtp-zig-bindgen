@@ -4,12 +4,12 @@ package main
 
 <% schema.exports.forEach(ex => { %>
 <% if (hasComment(ex)) -%>	
-// <%= formatCommentBlock(ex.description, "// ") %>
+// <%- formatCommentBlock(ex.description, "// ") %>
 <% if (ex.input && hasComment(ex.input)) { -%>
-// It takes <%= toGolangType(ex.input) %> as input (<%= formatCommentLine(ex.input.description) %>)
+// It takes <%= toGolangType(ex.input) %> as input (<%- formatCommentLine(ex.input.description) %>)
 <% } -%>
 <% if (ex.output && hasComment(ex.output)) { -%>
-// And returns <%= toGolangType(ex.output) %> (<%= formatCommentLine(ex.output.description) %>)
+// And returns <%= toGolangType(ex.output) %> (<%- formatCommentLine(ex.output.description) %>)
 <% } -%>
 <% -%>
 func <%= ex.name %>(<%- ex.input ? `input ${toGolangType(ex.input)}` : null %>) <%- ex.output ? `(${toGolangType(ex.output)}, error)` : "error" %> {
