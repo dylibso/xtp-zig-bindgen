@@ -5,3 +5,4 @@ bundle
 tests/output
 myplugin
 bindgen-test-artifacts
+kitchensink

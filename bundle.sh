@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
-
+echo "linting .ejs templates..."
+ejslint template/src/*.ejs
 npm i && npm run build
 
 rm -rf bundle

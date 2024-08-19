@@ -1,0 +1,25 @@
+const schema = @import("schema.zig");
+<%= schema.imports && schema.imports.length > 0 ? "const Host = schema.Host;" : null %>
+
+<% schema.exports.forEach(ex => { %>
+<% if (hasComment(ex)) -%>	
+/// <%- formatCommentBlock(ex.description, "/// ") %>
+<% if (ex.input && hasComment(ex.input)) { -%>
+/// It takes <%= toZigType(ex.input) %> as input (<%- formatCommentLine(ex.input.description) %>)
+<% } -%>
+<% if (ex.output && hasComment(ex.output)) { -%>
+/// And returns <%= toZigType(ex.output) %> (<%- formatCommentLine(ex.output.description) %>)
+<% } -%>
+<% -%>
+pub fn <%= ex.name %>(<%- ex.input ? `input: ${toZigType(ex.input, "schema")}` : null %>) !<%- ex.output ? `${toZigType(ex.output, "schema")}` : "void" %> {
+	<% if (featureFlags['stub-with-code-samples'] && codeSamples(ex, 'zig').length > 0) { -%>
+		<%- codeSamples(ex, 'zig')[0].source %>
+	<% } else { -%>
+		// TODO: fill out your implementation here
+		<% if (ex.input) { -%>
+		_ = input;
+		<% } -%>
+		return error.PluginFunctionNotImplemented;
+	<% } -%>
+}
+<% }) %>
