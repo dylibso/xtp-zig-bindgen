@@ -27,6 +27,7 @@ jobs:
       - name: Install
         run: |
           npm ci
+          npm install -g ejs-lint
 
       - name: Build
         run: |
