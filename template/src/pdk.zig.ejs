@@ -15,14 +15,29 @@ export fn <%- ex.name %>() i32 {
     // Get the input data
     <% if (ex.input.contentType === 'application/json') { -%>
     // in JSON
-    const jsonInput = _plugin.getJsonOpt(schema.<%- ex.input.$ref.name %>, .{}) catch |err| {
-        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-        _plugin.setError(msg);
-        return -1;
-    };
-    defer jsonInput.deinit();
+      <% if (ex.input.$ref) { -%>
+      const json_input = _plugin.getJsonOpt(schema.<%- ex.input.$ref.name %>, .{}) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+      };
+      defer json_input.deinit();
+      const input = json_input.value();
+      <% } else if (ex.input.type === 'object') { -%>
+        const s = _plugin.getInput() catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+        defer _plugin.allocator.free(s);
+        const parsed_input = std.json.parseFromSlice(std.json.ArrayHashMap(std.json.Value), _plugin.allocator, s, .{ .allocate = .alloc_always }) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+        const input = parsed_input.value;
+      <% } -%> 
     
-    const input = jsonInput.value();
     <% } else if (ex.input.type === 'string') { -%>
         <% if (ex.input.$ref && ex.input.$ref.enum) { -%>		
         // as a string Enum
@@ -31,7 +46,7 @@ export fn <%- ex.name %>() i32 {
         const input = std.enums.nameCast(<%- ex.input.$ref.name %>, s);
 	    <% } else { -%>
         // as a string
-		const input = _plugin.getInput() catch |err| {
+		    const input = _plugin.getInput() catch |err| {
             const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
             _plugin.setError(msg);
             return -1;

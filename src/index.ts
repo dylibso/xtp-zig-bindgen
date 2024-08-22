@@ -22,7 +22,7 @@ function toZigType(property: Property, pkg?: string): string {
     case "boolean":
       return "bool";
     case "object":
-      return "std.json.Value";
+      return "std.json.ArrayHashMap(std.json.Value)";
     case "array":
       if (!property.items) return "[]std.json.Value";
       // TODO this is not quite right to force cast
