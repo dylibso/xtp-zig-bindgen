@@ -8,7 +8,7 @@ const DateTime = @import("datetime").DateTime;
 const _host = struct {
 <% if (schema.imports.length > 0) { -%>
 <% Object.values(schema.imports).forEach(imp => { -%>
-    extern "extism:host/user" fn <%= imp.name %>(u64) <%= imp.output ? "u64" : "void" %>;
+    extern "extism:host/user" fn <%- imp.name %>(u64) <%- imp.output ? "u64" : "void" %>;
 <% }) -%>
 <% } -%>
 };
@@ -23,12 +23,12 @@ pub const Host = struct {
 	<% if (hasComment(imp)) -%>
 	/// <%- formatCommentBlock(imp.description, "/// ") %>
 	<% if (imp.input && hasComment(imp.input)) { -%>
-	/// It takes input of <%= toZigType(imp.input) %> (<%- formatCommentLine(imp.input.description) %>)
+	/// It takes input of <%- toZigType(imp.input) %> (<%- formatCommentLine(imp.input.description) %>)
 	<% } -%>
 	<% if (imp.output && hasComment(imp.output)) { -%>
-	/// And it returns an output <%= toZigType(imp.output) %> (<%- formatCommentLine(imp.output.description) %>)
+	/// And it returns an output <%- toZigType(imp.output) %> (<%- formatCommentLine(imp.output.description) %>)
 	<% } -%>
-	pub fn <%= imp.name %>(<%- imp.input ? `input: ${toZigType(imp.input)}` : null %>) !<%- imp.output ? `${toZigType(imp.output)}` : "void" %> {
+	pub fn <%- imp.name %>(<%- imp.input ? `input: ${toZigType(imp.input)}` : null %>) !<%- imp.output ? `${toZigType(imp.output)}` : "void" %> {
 	<% if (imp.input) { -%>
 		<% if (imp.input.contentType === 'application/json') { -%>
 		const b = try std.json.stringifyAlloc(_plugin.allocator, input, .{});
@@ -50,9 +50,9 @@ pub const Host = struct {
 		}
 		defer inMem.free();
 
-		<% if (imp.output) { -%>const ptr =<% } -%> _host.<%= imp.name %>(inMem.offset);
+		<% if (imp.output) { -%>const ptr =<% } -%> _host.<%- imp.name %>(inMem.offset);
 	<% } else { -%>
-		<% if (imp.output) { -%>const ptr =<% } -%> _host.<%= imp.name %>();
+		<% if (imp.output) { -%>const ptr =<% } -%> _host.<%- imp.name %>();
 	<% } -%>
 	<% if (imp.output) { -%>
 		if (ptr == 0) {
@@ -63,7 +63,7 @@ pub const Host = struct {
 		<% if (imp.output.contentType === 'application/json') { -%>
         const buffer = try _plugin.allocator.alloc(u8, @intCast(outMem.length));
         outMem.load(buffer);
-        const out = try std.json.parseFromSlice(<%= toZigType(imp.output) %>, _plugin.allocator, buffer, .{ .allocate = .alloc_always });    
+        const out = try std.json.parseFromSlice(<%- toZigType(imp.output) %>, _plugin.allocator, buffer, .{ .allocate = .alloc_always });    
         return out.value;
 		<% } else if (imp.output.contentType === 'text/plain; charset=UTF-8') { -%>
         const buffer = try _plugin.allocator.alloc(u8, @intCast(outMem.length));
@@ -90,21 +90,21 @@ pub const Host = struct {
 <% Object.values(schema.schemas).forEach(schema => { %>
 	<% if (schema.properties.length > 0) { -%>
 	/// <%- formatCommentBlock(schema.description, "/// ") %>
-	pub const <%= makeStructName(schema.name) %> = struct {
+	pub const <%- makeStructName(schema.name) %> = struct {
 		<% schema.properties.forEach(p => { -%>
 		<% if (p.description) { -%>
 		/// <%- formatCommentBlock(p.description, "/// ") %>
 		<% } -%>
-		<%= p.name %>: <%= p.nullable ? "?" : null %><%= toZigType(p) %>,
+		<%- p.name %>: <%- p.nullable ? "?" : null %><%- toZigType(p) %>,
 		<% }) %>
 	};
     <% } else if (schema.enum) { %>
 			<% if (schema.description) { -%>
 			/// <%- formatCommentBlock(schema.description, "/// ") %>
 			<% } -%>
-			pub const <%= makeStructName(schema.name) %> = enum {
+			pub const <%- makeStructName(schema.name) %> = enum {
 				<% schema.enum.forEach((variant) => { -%>
-				<%= variant %>,
+				<%- variant %>,
 				<% }) -%>
 			};
     <% } -%>

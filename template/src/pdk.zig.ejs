@@ -10,7 +10,7 @@ const _plugin = extism.Plugin.init(std.heap.wasm_allocator);
 const ERR_PRINTING_MSG: []const u8 = "std.fmt.allocPrint failed when formatting plugin error";
 
 <% schema.exports.forEach(ex => { -%>
-export fn <%= ex.name %>() i32 {
+export fn <%- ex.name %>() i32 {
   <% if (ex.input) { -%>
     // Get the input data
     <% if (ex.input.contentType === 'application/json') { -%>
@@ -50,13 +50,13 @@ export fn <%= ex.name %>() i32 {
 
 	// Call the implementation function
     <% if (ex.output) { -%>
-    const output = user.<%= ex.name %>(input) catch |err| {
+    const output = user.<%- ex.name %>(input) catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
         _plugin.setError(msg);
         return -1;
     };
     <% } else { -%>
-    user.<%= ex.name %>(input) catch |err| {
+    user.<%- ex.name %>(input) catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
         _plugin.setError(msg);
         return -1;
@@ -64,13 +64,13 @@ export fn <%= ex.name %>() i32 {
     <% } -%>
   <% } else { -%>
     <% if (ex.output) { -%>
-    const output = user.<%= ex.name %>() catch |err| {
+    const output = user.<%- ex.name %>() catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
         _plugin.setError(msg);
         return -1;
     };
     <% } else { -%>
-    user.<%= ex.name %>() catch |err| {
+    user.<%- ex.name %>() catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
         _plugin.setError(msg);
         return -1;
