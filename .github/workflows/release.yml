@@ -23,9 +23,13 @@ jobs:
         with:
           node-version: '14' # Specify the Node.js version you need
 
-      - name: Build
+      - name: Install
         run: |
           npm i
+          npm install -g ejs-lint
+
+      - name: Build
+        run: |
           npm run build
 
       - name: Run bundle script
