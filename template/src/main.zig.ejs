@@ -1,3 +1,4 @@
+<%- addStdImport(schema) %>
 const schema = @import("schema.zig");
 <%- schema.imports && schema.imports.length > 0 ? "const Host = schema.Host;" : null %>
 

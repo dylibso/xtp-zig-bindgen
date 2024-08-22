@@ -1,5 +1,5 @@
 import ejs from "ejs";
-import { getContext, helpers, Property } from "@dylibso/xtp-bindgen";
+import { getContext, helpers, Property, XtpSchema } from "@dylibso/xtp-bindgen";
 
 function toZigType(property: Property, pkg?: string): string {
   if (property.$ref) return (pkg ? `${pkg}.` : "") + property.$ref.name;
@@ -39,6 +39,21 @@ function pointerToZigType(property: Property) {
   return `*${typ}`;
 }
 
+function addStdImport(schema: XtpSchema) {
+  // in the generated `main.zig` this would include a reference to
+  // std.json.ArrayHashMap and std.json.Value, so we import "std".
+  const exportHasJsonObject = schema.exports.some((f) => {
+    return (f.input?.contentType === "application/json" &&
+      f.input.type === "object") ||
+      (f.output?.contentType === "application/json" &&
+        f.output.type === "object");
+  });
+
+  return exportHasJsonObject /* || others here */
+    ? 'const std = @import("std");'
+    : null;
+}
+
 function makeStructName(s: string) {
   const cap = s.charAt(0).toUpperCase();
   if (s.charAt(0) === cap) {
@@ -57,6 +72,7 @@ export function render() {
     toZigType,
     pointerToZigType,
     makeStructName,
+    addStdImport,
   };
 
   const output = ejs.render(tmpl, ctx);
