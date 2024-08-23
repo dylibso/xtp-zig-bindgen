@@ -8,7 +8,7 @@ const DateTime = @import("datetime").DateTime;
 const _host = struct {
 <% if (schema.imports.length > 0) { -%>
 <% Object.values(schema.imports).forEach(imp => { -%>
-    extern "extism:host/user" fn <%- imp.name %>(u64) <%- imp.output ? "u64" : "void" %>;
+    extern "extism:host/user" fn <%- imp.name %>(<%- imp.input ? "u64" : null %>) <%- imp.output ? "u64" : "void" %>;
 <% }) -%>
 <% } -%>
 };

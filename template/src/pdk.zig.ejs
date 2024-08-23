@@ -36,6 +36,19 @@ export fn <%- ex.name %>() i32 {
           return -1;
         };
         const input = parsed_input.value;
+      <% } else { -%> 
+        const s = _plugin.getInput() catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+        defer _plugin.allocator.free(s);
+        const parsed_input = std.json.parseFromSlice(<%- toZigType(ex.input) %>, _plugin.allocator, s, .{ .allocate = .alloc_always }) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+        const input = parsed_input.value;
       <% } -%> 
     
     <% } else if (ex.input.type === 'string') { -%>
@@ -65,7 +78,7 @@ export fn <%- ex.name %>() i32 {
 
 	// Call the implementation function
     <% if (ex.output) { -%>
-    const output = user.<%- ex.name %>(input) catch |err| {
+    const output = user.<%- ex.name %>(<% if (ex.input) { %>input<% } %>) catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
         _plugin.setError(msg);
         return -1;
