@@ -78,13 +78,13 @@ export fn <%- ex.name %>() i32 {
 
 	// Call the implementation function
     <% if (ex.output) { -%>
-    const output = user.<%- ex.name %>(<% if (ex.input) { %>input<% } %>) catch |err| {
+    const output = user.<%- zigFuncName(ex.name) %>(<% if (ex.input) { %>input<% } %>) catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
         _plugin.setError(msg);
         return -1;
     };
     <% } else { -%>
-    user.<%- ex.name %>(input) catch |err| {
+    user.<%- zigFuncName(ex.name) %>(input) catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
         _plugin.setError(msg);
         return -1;
@@ -92,13 +92,13 @@ export fn <%- ex.name %>() i32 {
     <% } -%>
   <% } else { -%>
     <% if (ex.output) { -%>
-    const output = user.<%- ex.name %>() catch |err| {
+    const output = user.<%- zigFuncName(ex.name) %>() catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
         _plugin.setError(msg);
         return -1;
     };
     <% } else { -%>
-    user.<%- ex.name %>() catch |err| {
+    user.<%- zigFuncName(ex.name) %>() catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
         _plugin.setError(msg);
         return -1;
