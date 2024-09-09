@@ -11,7 +11,6 @@ for file in ./schemas/*.yaml; do
   rm -rf output
   xtp plugin init --schema-file $file --template ../bundle --path output -y --feature stub-with-code-samples --name output
   cd output
-  # xtp plugin build
-  zig build
+  xtp plugin build
   cd ..
 done
