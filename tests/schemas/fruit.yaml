@@ -1,4 +1,13 @@
 exports:
+  snake_case_func_name:
+      description: This is a function that uses snake case in the name
+      input:
+        type: string
+        contentType: text/plain; charset=utf-8
+        description: A string passed into plugin input
+      output:
+        $ref: "#/components/schemas/some_value"
+        contentType: application/json
   voidFunc:
     description: "This demonstrates how you can create an export with\nno inputs or
       outputs. \n"
@@ -69,6 +78,11 @@ imports:
 version: v1-draft
 components:
   schemas:
+    some_value:
+      properties:
+        a_string:
+          type: string
+          description: a string
     WriteParams:
       properties:
         key:

@@ -2,7 +2,9 @@ import ejs from "ejs";
 import { getContext, helpers, Property, XtpSchema } from "@dylibso/xtp-bindgen";
 
 function toZigType(property: Property, pkg?: string): string {
-  if (property.$ref) return (pkg ? `${pkg}.` : "") + property.$ref.name;
+  if (property.$ref) {
+    return (pkg ? `${pkg}.` : "") + zigTypeName(property.$ref.name);
+  }
   switch (property.type) {
     case "string":
       if (property.format === "date-time") {
@@ -54,7 +56,16 @@ function addStdImport(schema: XtpSchema) {
     : null;
 }
 
-function makeStructName(s: string) {
+function zigFuncName(s: string) {
+  return helpers.snakeToCamelCase(s);
+}
+
+function zigVarName(s: string) {
+  return helpers.camelToSnakeCase(s);
+}
+
+function zigTypeName(s: string) {
+  s = helpers.snakeToCamelCase(s);
   const cap = s.charAt(0).toUpperCase();
   if (s.charAt(0) === cap) {
     return s;
@@ -71,8 +82,10 @@ export function render() {
     ...getContext(),
     toZigType,
     pointerToZigType,
-    makeStructName,
     addStdImport,
+    zigTypeName,
+    zigFuncName,
+    zigVarName,
   };
 
   const output = ejs.render(tmpl, ctx);

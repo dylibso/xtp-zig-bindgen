@@ -12,7 +12,7 @@ const schema = @import("schema.zig");
 /// And returns <%- toZigType(ex.output) %> (<%- formatCommentLine(ex.output.description) %>)
 <% } -%>
 <% -%>
-pub fn <%- ex.name %>(<%- ex.input ? `input: ${toZigType(ex.input, "schema")}` : null %>) !<%- ex.output ? `${toZigType(ex.output, "schema")}` : "void" %> {
+pub fn <%- zigFuncName(ex.name) %>(<%- ex.input ? `input: ${toZigType(ex.input, "schema")}` : null %>) !<%- ex.output ? `${toZigType(ex.output, "schema")}` : "void" %> {
 	<% if (featureFlags['stub-with-code-samples'] && codeSamples(ex, 'zig').length > 0) { -%>
 		<%- codeSamples(ex, 'zig')[0].source %>
 	<% } else { -%>

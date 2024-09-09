@@ -28,7 +28,7 @@ pub const Host = struct {
 	<% if (imp.output && hasComment(imp.output)) { -%>
 	/// And it returns an output <%- toZigType(imp.output) %> (<%- formatCommentLine(imp.output.description) %>)
 	<% } -%>
-	pub fn <%- imp.name %>(<%- imp.input ? `input: ${toZigType(imp.input)}` : null %>) !<%- imp.output ? `${toZigType(imp.output)}` : "void" %> {
+	pub fn <%- zigFuncName(imp.name) %>(<%- imp.input ? `input: ${toZigType(imp.input)}` : null %>) !<%- imp.output ? `${toZigType(imp.output)}` : "void" %> {
 	<% if (imp.input) { -%>
 		<% if (imp.input.contentType === 'application/json') { -%>
 		const b = try std.json.stringifyAlloc(_plugin.allocator, input, .{});
@@ -90,7 +90,7 @@ pub const Host = struct {
 <% Object.values(schema.schemas).forEach(schema => { %>
 	<% if (schema.properties.length > 0) { -%>
 	/// <%- formatCommentBlock(schema.description, "/// ") %>
-	pub const <%- makeStructName(schema.name) %> = struct {
+	pub const <%- zigTypeName(schema.name) %> = struct {
 		<% schema.properties.forEach(p => { -%>
 		<% if (p.description) { -%>
 		/// <%- formatCommentBlock(p.description, "/// ") %>
@@ -102,7 +102,7 @@ pub const Host = struct {
 			<% if (schema.description) { -%>
 			/// <%- formatCommentBlock(schema.description, "/// ") %>
 			<% } -%>
-			pub const <%- makeStructName(schema.name) %> = enum {
+			pub const <%- zigTypeName(schema.name) %> = enum {
 				<% schema.enum.forEach((variant) => { -%>
 				<%- variant %>,
 				<% }) -%>
