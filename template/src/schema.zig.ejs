@@ -97,15 +97,48 @@ pub const Host = struct {
 		<% } -%>
 		<%- p.name %>: <%- p.nullable ? "?" : null %><%- toZigType(p) %>,
 		<% }) %>
+
+		pub fn __decodeBase64Fields(self: *<%- zigTypeName(schema.name) %>) !*<%- zigTypeName(schema.name) %> {
+			<% if (schema.properties.some(p => { return p.type === 'buffer' })) { -%>
+			var b64dec = std.base64.standard_no_pad.Decoder;
+			<% } %>
+			<% schema.properties.forEach(p => { -%>
+			<% if (p.$ref && !p.$ref.enum) { %>
+			self.<%- p.name %> = (try self.<%- p.name %>.__decodeBase64Fields()).*;
+			<% } else if (p.type === 'buffer') { %>
+			const dest_<%- p.name %> = try std.heap.wasm_allocator.alloc(u8, try b64dec.calcSizeForSlice(self.<%- p.name %>));
+			try b64dec.decode(dest_<%- p.name %>, self.<%- p.name %>);
+			self.<%- p.name %> = dest_<%- p.name %>;
+			<% } %>
+			<% }) %>
+
+			return self;
+		}
+
+		pub fn __encodeBase64Fields(self: *<%- zigTypeName(schema.name) %>) !*<%- zigTypeName(schema.name) %> {
+			<% if (schema.properties.some(p => { return p.type === 'buffer' })) { -%>
+			var b64enc = std.base64.standard.Encoder;
+			<% } %>
+			<% schema.properties.forEach(p => { -%>
+			<% if (p.$ref && !p.$ref.enum) { %>
+			self.<%- p.name %> = (try self.<%- p.name %>.__encodeBase64Fields()).*;
+			<% } else if (p.type === 'buffer') { %>
+			const dest_<%- p.name %> = try std.heap.wasm_allocator.alloc(u8, b64enc.calcSize(self.<%- p.name %>.len));
+			self.<%- p.name %> = b64enc.encode(dest_<%- p.name %>, self.<%- p.name %>);
+			<% } %>
+			<% }) %>
+
+			return self;
+		}
 	};
-    <% } else if (schema.enum) { %>
-			<% if (schema.description) { -%>
-			/// <%- formatCommentBlock(schema.description, "/// ") %>
-			<% } -%>
-			pub const <%- zigTypeName(schema.name) %> = enum {
-				<% schema.enum.forEach((variant) => { -%>
-				<%- variant %>,
-				<% }) -%>
-			};
-    <% } -%>
+	<% } else if (schema.enum) { %>
+		<% if (schema.description) { -%>
+		/// <%- formatCommentBlock(schema.description, "/// ") %>
+		<% } -%>
+		pub const <%- zigTypeName(schema.name) %> = enum {
+			<% schema.enum.forEach((variant) => { -%>
+			<%- variant %>,
+			<% }) -%>
+		};
+	<% } -%>
 <% }) %>
