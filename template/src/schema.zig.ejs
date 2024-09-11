@@ -100,7 +100,7 @@ pub const Host = struct {
 
 		pub fn __decodeBase64Fields(self: *<%- zigTypeName(schema.name) %>) !*<%- zigTypeName(schema.name) %> {
 			<% if (schema.properties.some(p => { return p.type === 'buffer' })) { -%>
-			var b64dec = std.base64.standard_no_pad.Decoder;
+			var b64dec = std.base64.standard.Decoder;
 			<% } %>
 			<% schema.properties.forEach(p => { -%>
 			<% if (p.$ref && !p.$ref.enum) { %>
