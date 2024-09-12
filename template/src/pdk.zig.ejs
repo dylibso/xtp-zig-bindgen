@@ -16,39 +16,69 @@ export fn <%- ex.name %>() i32 {
     <% if (ex.input.contentType === 'application/json') { -%>
     // in JSON
       <% if (ex.input.$ref) { -%>
-      const json_input = _plugin.getJsonOpt(schema.<%- ex.input.$ref.name %>, .{}) catch |err| {
+      const json_input = _plugin.getJsonOpt(schema.<%- zigTypeName(ex.input.$ref.name) %>, .{}) catch |err| {
           const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
           _plugin.setError(msg);
           return -1;
       };
       defer json_input.deinit();
-      const input = json_input.value();
+      
+      <% if (!ex.input.$ref.enum) { %>
+        var input = json_input.value();
+        // decode all the inner buffer fields from base64 (may be no-op)
+        input = (input.XXX__decodeBase64Fields() catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        }).*;
+      <% } %>
+
+      <% } else if (ex.input.type === 'buffer') { -%>
+      var input = json_input.value();
+      var b64dec = std.base64.standard.Decoder;
+      const n = b64dec.calcSizeForSlice(input) catch |err| {
+        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+        _plugin.setError(msg);
+        return -1;
+      };
+      const dest = _plugin.allocator.alloc(u8, n) catch |err| {
+        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+        _plugin.setError(msg);
+        return -1;
+      };
+      b64dec.decode(dest, input) catch |err| {
+        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+        _plugin.setError(msg);
+        return -1;
+      };
+      input = dest;
+
       <% } else if (ex.input.type === 'object') { -%>
-        const s = _plugin.getInput() catch |err| {
-          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-          _plugin.setError(msg);
-          return -1;
-        };
-        defer _plugin.allocator.free(s);
-        const parsed_input = std.json.parseFromSlice(std.json.ArrayHashMap(std.json.Value), _plugin.allocator, s, .{ .allocate = .alloc_always }) catch |err| {
-          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-          _plugin.setError(msg);
-          return -1;
-        };
-        const input = parsed_input.value;
+      const s = _plugin.getInput() catch |err| {
+        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+        _plugin.setError(msg);
+        return -1;
+      };
+      defer _plugin.allocator.free(s);
+      const parsed_input = std.json.parseFromSlice(std.json.ArrayHashMap(std.json.Value), _plugin.allocator, s, .{ .allocate = .alloc_always }) catch |err| {
+        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+        _plugin.setError(msg);
+        return -1;
+      };
+      const input = parsed_input.value;
       <% } else { -%> 
-        const s = _plugin.getInput() catch |err| {
-          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-          _plugin.setError(msg);
-          return -1;
-        };
-        defer _plugin.allocator.free(s);
-        const parsed_input = std.json.parseFromSlice(<%- toZigType(ex.input) %>, _plugin.allocator, s, .{ .allocate = .alloc_always }) catch |err| {
-          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-          _plugin.setError(msg);
-          return -1;
-        };
-        const input = parsed_input.value;
+      const s = _plugin.getInput() catch |err| {
+        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+        _plugin.setError(msg);
+        return -1;
+      };
+      defer _plugin.allocator.free(s);
+      const parsed_input = std.json.parseFromSlice(<%- toZigType(ex.input) %>, _plugin.allocator, s, .{ .allocate = .alloc_always }) catch |err| {
+        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+        _plugin.setError(msg);
+        return -1;
+      };
+      const input = parsed_input.value;
       <% } -%> 
     
     <% } else if (ex.input.type === 'string') { -%>
@@ -77,6 +107,9 @@ export fn <%- ex.name %>() i32 {
     <% } -%>
 
 	// Call the implementation function
+    <% if (ex.input.$ref && ex.input.$ref.enum) { -%>
+    const input = json_input.value();
+    <% } -%>
     <% if (ex.output) { -%>
     const output = user.<%- zigFuncName(ex.name) %>(<% if (ex.input) { %>input<% } %>) catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
@@ -108,18 +141,54 @@ export fn <%- ex.name %>() i32 {
 
   <% if (ex.output) { -%>
     <% if (ex.output.contentType === 'application/json') { -%>
-    _plugin.outputJson(output, .{}) catch |err| {
-        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-        _plugin.setError(msg);
-        return -1;
-    };
-    <% } else if (ex.output.type === 'text/plain; charset=UTF-8') { -%>
-    if (!std.unicode.utf8ValidateSlice(input)) {
-      return error.InvalidUtf8;
+      <% if (ex.output.$ref && !ex.output.$ref.enum) { -%>
+        var json_output = output;
+        // encode all the inner buffer fields to base64 (may be no-op)
+        json_output = (json_output.XXX__encodeBase64Fields() catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        }).*;
+        _plugin.outputJson(json_output, .{}) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+      <% } else if (ex.output.type === 'buffer') { -%>
+        var json_output = output;
+        var b64enc = std.base64.standard.Encoder;
+        const out_n = b64enc.calcSize(json_output.len) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+        const out_dest = _plugin.allocator.alloc(u8, out_n) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+        json_output = b64enc.encode(out_dest, json_output) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+        _plugin.outputJson(json_output, .{}) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+      <% } else { %>
+        _plugin.outputJson(output, .{}) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+      <% } -%>
+    <% } else if (ex.output.contentType === 'text/plain; charset=UTF-8') { -%>
+    if (!std.unicode.utf8ValidateSlice(output)) {
+      _plugin.setError("output is not valud UTF8");
+      return -1;
     }
-    _plugin.output(output);
-    <% } else if (ex.output.type === 'string') { -%>
-    _plugin.output(output);
     <% } else { -%>
     _plugin.output(output);
     <% } -%>
