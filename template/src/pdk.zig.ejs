@@ -23,17 +23,19 @@ export fn <%- ex.name %>() i32 {
       };
       defer json_input.deinit();
       
-      var input = json_input.value();
-      // decode all the inner buffer fields from base64 (may be no-op)
-      input = (input.__decodeBase64Fields() catch |err| {
-        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-        _plugin.setError(msg);
-        return -1;
-      }).*;
+      <% if (!ex.input.$ref.enum) { %>
+        var input = json_input.value();
+        // decode all the inner buffer fields from base64 (may be no-op)
+        input = (input.XXX__decodeBase64Fields() catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        }).*;
+      <% } %>
 
       <% } else if (ex.input.type === 'buffer') { -%>
       var input = json_input.value();
-      var b64dec = std.base64.standard_no_pad.Decoder;
+      var b64dec = std.base64.standard.Decoder;
       const n = b64dec.calcSizeForSlice(input) catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
         _plugin.setError(msg);
@@ -105,6 +107,9 @@ export fn <%- ex.name %>() i32 {
     <% } -%>
 
 	// Call the implementation function
+    <% if (ex.input.$ref && ex.input.$ref.enum) { -%>
+    const input = json_input.value();
+    <% } -%>
     <% if (ex.output) { -%>
     const output = user.<%- zigFuncName(ex.name) %>(<% if (ex.input) { %>input<% } %>) catch |err| {
         const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
@@ -136,45 +141,54 @@ export fn <%- ex.name %>() i32 {
 
   <% if (ex.output) { -%>
     <% if (ex.output.contentType === 'application/json') { -%>
-    var json_output = output;
-    <% if (ex.output.$ref) { -%>
-    // encode all the inner buffer fields to base64 (may be no-op)
-    json_output = (json_output.__encodeBase64Fields() catch |err| {
-      const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-      _plugin.setError(msg);
+      <% if (ex.output.$ref && !ex.output.$ref.enum) { -%>
+        var json_output = output;
+        // encode all the inner buffer fields to base64 (may be no-op)
+        json_output = (json_output.XXX__encodeBase64Fields() catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        }).*;
+        _plugin.outputJson(json_output, .{}) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+      <% } else if (ex.output.type === 'buffer') { -%>
+        var json_output = output;
+        var b64enc = std.base64.standard.Encoder;
+        const out_n = b64enc.calcSize(json_output.len) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+        const out_dest = _plugin.allocator.alloc(u8, out_n) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+        json_output = b64enc.encode(out_dest, json_output) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+        _plugin.outputJson(json_output, .{}) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+      <% } else { %>
+        _plugin.outputJson(output, .{}) catch |err| {
+          const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
+          _plugin.setError(msg);
+          return -1;
+        };
+      <% } -%>
+    <% } else if (ex.output.contentType === 'text/plain; charset=UTF-8') { -%>
+    if (!std.unicode.utf8ValidateSlice(output)) {
+      _plugin.setError("output is not valud UTF8");
       return -1;
-    }).*;
-    <% } else if (ex.output.type === 'buffer') { -%>
-    var b64enc = std.base64.standard_no_pad.Encoder;
-    const out_n = b64enc.calcSize(json_output.len) catch |err| {
-      const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-      _plugin.setError(msg);
-      return -1;
-    };
-    const out_dest = _plugin.allocator.alloc(u8, out_n) catch |err| {
-      const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-      _plugin.setError(msg);
-      return -1;
-    };
-    b64enc.encode(out_dest, json_output) catch |err| {
-      const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-      _plugin.setError(msg);
-      return -1;
-    };
-    json_output = out_dest;
-    <% } -%>
-    _plugin.outputJson(json_output, .{}) catch |err| {
-        const msg = std.fmt.allocPrint(_plugin.allocator, "{}", .{err}) catch ERR_PRINTING_MSG;
-        _plugin.setError(msg);
-        return -1;
-    };
-    <% } else if (ex.output.type === 'text/plain; charset=UTF-8') { -%>
-    if (!std.unicode.utf8ValidateSlice(input)) {
-      return error.InvalidUtf8;
     }
-    _plugin.output(output);
-    <% } else if (ex.output.type === 'string') { -%>
-    _plugin.output(output);
     <% } else { -%>
     _plugin.output(output);
     <% } -%>
