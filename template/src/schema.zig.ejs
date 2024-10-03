@@ -63,7 +63,7 @@ pub const Host = struct {
 		<% if (imp.output.contentType === 'application/json') { -%>
         const buffer = try _plugin.allocator.alloc(u8, @intCast(outMem.length));
         outMem.load(buffer);
-        const out = try std.json.parseFromSlice(<%- toZigType(imp.output) %>, _plugin.allocator, buffer, .{ .allocate = .alloc_always });    
+        const out = try std.json.parseFromSlice(<%- toZigType(imp.output) %>, _plugin.allocator, buffer, .{ .allocate = .alloc_always, .ignore_unknown_fields = true });    
         return out.value;
 		<% } else if (imp.output.contentType === 'text/plain; charset=UTF-8') { -%>
         const buffer = try _plugin.allocator.alloc(u8, @intCast(outMem.length));
