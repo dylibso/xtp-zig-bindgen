@@ -23,12 +23,12 @@ pub const Host = struct {
 	<% if (hasComment(imp)) -%>
 	/// <%- formatCommentBlock(imp.description, "/// ") %>
 	<% if (imp.input && hasComment(imp.input)) { -%>
-	/// It takes input of <%- toZigType(imp.input) %> (<%- formatCommentLine(imp.input.description) %>)
+	/// It takes input of <%- toZigType(imp.input.xtpType) %> (<%- formatCommentLine(imp.input.description) %>)
 	<% } -%>
 	<% if (imp.output && hasComment(imp.output)) { -%>
-	/// And it returns an output <%- toZigType(imp.output) %> (<%- formatCommentLine(imp.output.description) %>)
+	/// And it returns an output <%- toZigType(imp.output.xtpType) %> (<%- formatCommentLine(imp.output.description) %>)
 	<% } -%>
-	pub fn <%- zigFuncName(imp.name) %>(<%- imp.input ? `input: ${toZigType(imp.input)}` : null %>) !<%- imp.output ? `${toZigType(imp.output)}` : "void" %> {
+	pub fn <%- zigFuncName(imp.name) %>(<%- imp.input ? `input: ${toZigType(imp.input.xtpType)}` : null %>) !<%- imp.output ? `${toZigType(imp.output.xtpType)}` : "void" %> {
 	<% if (imp.input) { -%>
 		<% if (imp.input.contentType === 'application/json') { -%>
 		const b = try std.json.stringifyAlloc(_plugin.allocator, input, .{});
@@ -63,7 +63,7 @@ pub const Host = struct {
 		<% if (imp.output.contentType === 'application/json') { -%>
         const buffer = try _plugin.allocator.alloc(u8, @intCast(outMem.length));
         outMem.load(buffer);
-        const out = try std.json.parseFromSlice(<%- toZigType(imp.output) %>, _plugin.allocator, buffer, .{ .allocate = .alloc_always, .ignore_unknown_fields = true });    
+        const out = try std.json.parseFromSlice(<%- toZigType(imp.output.xtpType) %>, _plugin.allocator, buffer, .{ .allocate = .alloc_always, .ignore_unknown_fields = true });    
         return out.value;
 		<% } else if (imp.output.contentType === 'text/plain; charset=UTF-8') { -%>
         const buffer = try _plugin.allocator.alloc(u8, @intCast(outMem.length));
@@ -88,14 +88,14 @@ pub const Host = struct {
 <% } -%>
 
 <% Object.values(schema.schemas).forEach(schema => { %>
-	<% if (schema.properties.length > 0) { -%>
+	<% if (isObject(schema)) { -%>
 	/// <%- formatCommentBlock(schema.description, "/// ") %>
 	pub const <%- zigTypeName(schema.name) %> = struct {
 		<% schema.properties.forEach(p => { -%>
 		<% if (p.description) { -%>
 		/// <%- formatCommentBlock(p.description, "/// ") %>
 		<% } -%>
-		<%- p.name %>: <%- p.nullable ? "?" : null %><%- toZigType(p) %><%- p.nullable ? " = null" : null %>,
+		<%- p.name %>: <%- p.nullable ? "?" : null %><%- toZigType(p.xtpType) %><%- p.nullable ? " = null" : null %>,
 		<% }) %>
 
 		/// Internally used function, should not be called by plugin authors.
@@ -145,7 +145,7 @@ pub const Host = struct {
 			return self;
 		}
 	};
-	<% } else if (schema.enum) { %>
+	<% } else if (isEnum(schema)) { %>
 		<% if (schema.description) { -%>
 		/// <%- formatCommentBlock(schema.description, "/// ") %>
 		<% } -%>
