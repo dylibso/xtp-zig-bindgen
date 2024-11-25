@@ -1,43 +1,60 @@
 import ejs from "ejs";
-import { getContext, helpers, Property, XtpSchema } from "@dylibso/xtp-bindgen";
+import {
+  ArrayType,
+  EnumType,
+  getContext,
+  helpers,
+  ObjectType,
+  XtpNormalizedType,
+  XtpSchema,
+} from "@dylibso/xtp-bindgen";
 
-function toZigType(property: Property, pkg?: string): string {
-  if (property.$ref) {
-    return (pkg ? `${pkg}.` : "") + zigTypeName(property.$ref.name);
-  }
-  switch (property.type) {
+function toZigType(type: XtpNormalizedType, pkg?: string): string {
+  switch (type.kind) {
+    case "date-time":
+      return "DateTime";
     case "string":
-      if (property.format === "date-time") {
-        return "DateTime";
-      }
       return "[]const u8";
-    case "number":
-      if (property.format === "float") {
-        return "f64";
-      }
-      if (property.format === "double") {
-        return "f64";
-      }
-      return "i64";
-    case "integer":
+    case "float":
+      return "f64";
+    case "double":
+      return "f64";
+    case "int32":
       return "i32";
+    case "int64":
+      return "i64";
     case "boolean":
       return "bool";
-    case "object":
-      return "std.json.ArrayHashMap(std.json.Value)";
-    case "array":
-      if (!property.items) return "[]std.json.Value";
-      // TODO this is not quite right to force cast
-      return `[]${toZigType(property.items as Property)}`;
     case "buffer":
       return "[]const u8";
+    case "byte":
+      return "u8";
+
+    case "object":
+      const oType = type as ObjectType;
+      if (oType.properties?.length > 0) {
+        return (pkg ? `${pkg}.` : "") + zigTypeName(oType.name);
+      }
+      return "std.json.ArrayHashMap(std.json.Value)";
+
+    case "array":
+      const arrayType = type as ArrayType;
+      if (!arrayType.elementType) {
+        return "[]std.json.Value";
+      }
+      return `[]${toZigType(arrayType.elementType)}`;
+
+    case "enum":
+      const eType = type as EnumType;
+      return zigTypeName(eType.name);
+
     default:
-      throw new Error("Can't convert property to Zig type: " + property.type);
+      throw new Error("Can't convert property to Zig type: " + type.kind);
   }
 }
 
-function pointerToZigType(property: Property) {
-  const typ = toZigType(property);
+function pointerToZigType(type: XtpNormalizedType) {
+  const typ = toZigType(type);
   return `*${typ}`;
 }
 
