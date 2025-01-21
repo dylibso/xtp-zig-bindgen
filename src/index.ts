@@ -45,10 +45,7 @@ function addStdImport(schema: XtpSchema) {
   // in the generated `main.zig` this would include a reference to
   // std.json.ArrayHashMap and std.json.Value, so we import "std".
   const exportHasJsonObject = schema.exports.some((f) => {
-    return (f.input?.contentType === "application/json" &&
-      f.input.type === "object") ||
-      (f.output?.contentType === "application/json" &&
-        f.output.type === "object");
+    return (helpers.isJsonEncoded(f.input!)) || (helpers.isJsonEncoded(f.output!));
   });
 
   return exportHasJsonObject /* || others here */
