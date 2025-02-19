@@ -95,7 +95,7 @@ pub const Host = struct {
 		<% if (p.description) { -%>
 		/// <%- formatCommentBlock(p.description, "/// ") %>
 		<% } -%>
-		<%- p.name %>: <%- p.nullable ? "?" : null %><%- toZigType(p) %><%- p.nullable ? " = null" : null %>,
+		<%- p.name %>: <%- isZigOptional(schema, p) ? "?" : null %><%- toZigType(p) %><%- isZigOptional(schema, p) ? " = null" : null %>,
 		<% }) %>
 
 		/// Internally used function, should not be called by plugin authors.
@@ -105,11 +105,11 @@ pub const Host = struct {
 			<% } %>
 			<% schema.properties.forEach(p => { -%>
 			<% if (p.$ref && !p.$ref.enum) { %>
-			<% if (p.nullable) { %>
+			<% if (isZigOptional(schema, p)) { %>
 			if (self.<%- p.name %> != null) {
 			<% } -%>
-			self.<%- p.name %> = (try self.<%- p.name %>.<%- p.nullable ? '?.' : null %>XXX__decodeBase64Fields()).*;
-			<% if (p.nullable) { %>
+			self.<%- p.name %> = (try self.<%- p.name %>.<%- isZigOptional(schema, p) ? '?.' : null %>XXX__decodeBase64Fields()).*;
+			<% if (isZigOptional(schema, p)) { %>
 			}
 			<% } -%>
 			<% } else if (p.type === 'buffer') { %>
@@ -129,11 +129,11 @@ pub const Host = struct {
 			<% } %>
 			<% schema.properties.forEach(p => { -%>
 			<% if (p.$ref && !p.$ref.enum) { %>
-			<% if (p.nullable) { %>
+			<% if (isZigOptional(schema, p)) { %>
 			if (self.<%- p.name %> != null) {
 			<% } -%>
-			self.<%- p.name %> = (try self.<%- p.name %>.<%- p.nullable ? '?.' : null %>XXX__encodeBase64Fields()).*;
-			<% if (p.nullable) { %>
+			self.<%- p.name %> = (try self.<%- p.name %>.<%- isZigOptional(schema, p) ? '?.' : null %>XXX__encodeBase64Fields()).*;
+			<% if (isZigOptional(schema, p)) { %>
 			}
 			<% } -%>
 			<% } else if (p.type === 'buffer') { %>
