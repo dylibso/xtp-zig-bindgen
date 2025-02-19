@@ -95,7 +95,7 @@ pub const Host = struct {
 		<% if (p.description) { -%>
 		/// <%- formatCommentBlock(p.description, "/// ") %>
 		<% } -%>
-		<%- p.name %>: <%- p.nullable ? "?" : null %><%- toZigType(p) %><%- p.nullable ? " = null" : null %>,
+		<%- p.name %>: <%- isZigOptional(schema, p) ? "?" : null %><%- toZigType(p) %><%- isZigOptional(schema, p) ? " = null" : null %>,
 		<% }) %>
 
 		/// Internally used function, should not be called by plugin authors.
@@ -105,18 +105,28 @@ pub const Host = struct {
 			<% } %>
 			<% schema.properties.forEach(p => { -%>
 			<% if (p.$ref && !p.$ref.enum) { %>
-			<% if (p.nullable) { %>
+			<% if (isZigOptional(schema, p)) { %>
 			if (self.<%- p.name %> != null) {
 			<% } -%>
-			self.<%- p.name %> = (try self.<%- p.name %>.<%- p.nullable ? '?.' : null %>XXX__decodeBase64Fields()).*;
-			<% if (p.nullable) { %>
+			self.<%- p.name %> = (try self.<%- p.name %>.<%- isZigOptional(schema, p) ? '?.' : null %>XXX__decodeBase64Fields()).*;
+			<% if (isZigOptional(schema, p)) { %>
 			}
 			<% } -%>
 			<% } else if (p.type === 'buffer') { %>
-			const dest_<%- p.name %> = try std.heap.wasm_allocator.alloc(u8, try b64dec.calcSizeForSlice(self.<%- p.name %>));
-			try b64dec.decode(dest_<%- p.name %>, self.<%- p.name %>);
-			self.<%- p.name %> = dest_<%- p.name %>;
-			<% } %>
+				<% if (isZigOptional(schema, p)) { %>
+				if (self.aBuffer != null) {
+				<% }  /* end isZigOptional */ -%> 
+
+				const srcBuf = self.<%- p.name %><%- isZigOptional(schema, p) ? '.?' : null %>;
+				const dest_<%- p.name %> = try std.heap.wasm_allocator.alloc(u8, try b64dec.calcSizeForSlice(srcBuf));
+				try b64dec.decode(dest_<%- p.name %>, srcBuf);
+				self.<%- p.name %> = dest_<%- p.name %>;
+
+				<% if (isZigOptional(schema, p)) { %>
+				}
+				<% }  /* end isZigOptional */ -%> 
+
+			<% } /* end buffer */ %>
 			<% }) %>
 
 			return self;
@@ -129,16 +139,23 @@ pub const Host = struct {
 			<% } %>
 			<% schema.properties.forEach(p => { -%>
 			<% if (p.$ref && !p.$ref.enum) { %>
-			<% if (p.nullable) { %>
+			<% if (isZigOptional(schema, p)) { %>
 			if (self.<%- p.name %> != null) {
 			<% } -%>
-			self.<%- p.name %> = (try self.<%- p.name %>.<%- p.nullable ? '?.' : null %>XXX__encodeBase64Fields()).*;
-			<% if (p.nullable) { %>
+			self.<%- p.name %> = (try self.<%- p.name %>.<%- isZigOptional(schema, p) ? '?.' : null %>XXX__encodeBase64Fields()).*;
+			<% if (isZigOptional(schema, p)) { %>
 			}
 			<% } -%>
 			<% } else if (p.type === 'buffer') { %>
-			const dest_<%- p.name %> = try std.heap.wasm_allocator.alloc(u8, b64enc.calcSize(self.<%- p.name %>.len));
-			self.<%- p.name %> = b64enc.encode(dest_<%- p.name %>, self.<%- p.name %>);
+				<% if (isZigOptional(schema, p)) { %>
+				if (self.<%- p.name %> != null) {
+				<% } -%>
+				const srcBuf = self.<%- p.name %><%- isZigOptional(schema, p) ? '.?' : null %>;
+				const dest_<%- p.name %> = try std.heap.wasm_allocator.alloc(u8, b64enc.calcSize(srcBuf.len));
+				self.<%- p.name %> = b64enc.encode(dest_<%- p.name %>, srcBuf);
+				<% if (isZigOptional(schema, p)) { %>
+				}
+				<% }  /* end isZigOptional */ -%> 		
 			<% } %>
 			<% }) %>
 

@@ -1,5 +1,5 @@
 import ejs from "ejs";
-import { getContext, helpers, Property, XtpSchema } from "@dylibso/xtp-bindgen";
+import { getContext, helpers, Property, XtpSchema, Schema } from "@dylibso/xtp-bindgen";
 
 function toZigType(property: Property, pkg?: string): string {
   if (property.$ref) {
@@ -41,6 +41,10 @@ function pointerToZigType(property: Property) {
   return `*${typ}`;
 }
 
+function isZigOptional(schema: Schema, property: Property) {
+  return property.nullable || !schema.required?.includes(property.name);
+}
+
 function addStdImport(schema: XtpSchema) {
   // in the generated `main.zig` this would include a reference to
   // std.json.ArrayHashMap and std.json.Value, so we import "std".
@@ -77,6 +81,7 @@ export function render() {
   const ctx = {
     ...helpers,
     ...getContext(),
+    isZigOptional,
     toZigType,
     pointerToZigType,
     addStdImport,
