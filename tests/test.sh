@@ -9,8 +9,9 @@ cd tests
 for file in ./schemas/*.yaml; do
   echo "Generating and testing $file..."
   rm -rf output
-  xtp plugin init --schema-file $file --template ../bundle --path output -y --feature stub-with-code-samples --name output --app my-app-id
+  xtp plugin init --schema-file $file --template ../bundle --path output -y --feature stub-with-code-samples --name output --app my-app-id --extension-point my-extension-point-id
   cd output
-  xtp plugin build
+  # xtp plugin build
+  zig build
   cd ..
 done
